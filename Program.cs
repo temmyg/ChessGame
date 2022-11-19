@@ -8,8 +8,6 @@ namespace ChessPawn
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-
             var chess = new Chess();
 
             var canMove = chess.CanPawnMove(2, 2, 4, 3, PieceColor.White);
