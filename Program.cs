@@ -36,67 +36,72 @@ namespace ChessPawn
         /// <returns>if can move</returns>
         public bool CanPawnMove(int currRow, int currCol, int nextRow, int nextCol, PieceColor color)
         {
-            var mySidePieces = GetColoredPieces(color);
-            var currPos = currRow * 10 + currCol;
+            var friendPieces = GetColoredPieces(color);
+            var currPos = GetCombinedPosition(currRow, currCol);
 
-            if (!mySidePieces.ContainsKey(currPos) || mySidePieces[currPos] != PieceType.Pawn)
+            if (!friendPieces.ContainsKey(currPos) || friendPieces[currPos] != PieceType.Pawn)
             {
                 throw new Exception("The current position of the Paw is not valid.");
             }
 
-            var rowDistance = nextRow - currRow;
-
-            // after above if check, this piece type can only be pawn and currRow can only be from 2 to 8
-            if (currRow == 8 
-                || !(rowDistance == 1 || rowDistance == 2)
-                || (rowDistance == 2 && currRow != 2))
+            if(currRow > 7 || currRow < 2)
             {
                 return false;
             }
-
-            var possibleCols = new HashSet<int> { currCol };
-
-            if (rowDistance == 1 && currCol < 8)
-            {
-                possibleCols.Add(currCol + 1);
-            }
-
-            if (rowDistance == 1 && currCol > 1)
-            {
-                possibleCols.Add(nextCol - 1);
-            }
-
-            if (!possibleCols.Contains(nextCol))
-            {
-                return false;
-            }
-
-            var isDiagonal = Math.Abs(nextCol - currCol) == 1;
 
             var enemyPositions = (ICollection<int>)GetColoredPieces(1 - color).Keys;
-            var allPositions = mySidePieces.Keys.Concat(enemyPositions);
+            var allPositions = friendPieces.Keys.Concat(enemyPositions);
 
-            var nextPosition = nextRow * 10 + nextCol;
+            var validNextPositions = new HashSet<int>();
 
-            if (isDiagonal && !enemyPositions.Contains(nextPosition))
+            var nextPosition = GetCombinedPosition(currRow + 1, currCol);
+            if (!allPositions.Contains(nextPosition))
             {
-                return false;
+                validNextPositions.Add(nextPosition);
             }
 
-            if (!isDiagonal && allPositions.Contains(nextPosition))
+            if(currRow == 2)
             {
-                return false;
+                nextPosition = GetCombinedPosition(currRow + 2, currCol);
+
+                if(!allPositions.Contains(nextPosition))
+                {
+                    validNextPositions.Add(nextPosition);
+                }
             }
 
-            return true;
+            if(currCol < 8)
+            {
+                nextPosition = GetCombinedPosition(currRow + 1, currCol + 1);
+                if (enemyPositions.Contains(nextPosition))
+                {
+                    validNextPositions.Add(nextPosition);
+                }
+            }
+
+            if(currCol > 1)
+            {
+                nextPosition = GetCombinedPosition(currRow + 1, currCol - 1);
+                if (enemyPositions.Contains(nextPosition))
+                {
+                    validNextPositions.Add(nextPosition);
+                }
+            }
+
+            if(validNextPositions.Contains(GetCombinedPosition(nextRow, nextCol)))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private void Initialize()
         {
             for (int i = 0; i < 8; i++)
             {
-                whitePieces.Add(2 * 10 + i + 1, PieceType.Pawn);
-                blackPieces.Add((9 - 2) * 10 + i + 1, PieceType.Pawn);
+                whitePieces.Add(GetCombinedPosition(2, i+1), PieceType.Pawn);
+                blackPieces.Add(GetCombinedPosition(9-2, i+1), PieceType.Pawn);
             }
 
             for (PieceType i = PieceType.Rook; i <= PieceType.King; i++)
@@ -105,30 +110,30 @@ namespace ChessPawn
                 switch (i)
                 {
                     case PieceType.Rook:
-                        whitePieces.Add(rowWhite * 10 + 1, i);
-                        whitePieces.Add(rowWhite * 10 + 9 - 1, i);
-                        blackPieces.Add(rowBlack * 10 + 1, i);
-                        blackPieces.Add(rowBlack * 10 + 9 - 1, i);
+                        whitePieces.Add(GetCombinedPosition(rowWhite, 1), i);
+                        whitePieces.Add(GetCombinedPosition(rowWhite, 9-1), i);
+                        blackPieces.Add(GetCombinedPosition(rowBlack, 1), i);
+                        blackPieces.Add(GetCombinedPosition(rowBlack, 9-1), i);
                         break;
                     case PieceType.Knight:
-                        whitePieces.Add(rowWhite * 10 + 2, i);
-                        whitePieces.Add(rowWhite * 10 + 9 - 2, i);
-                        blackPieces.Add(rowBlack * 10 + 2, i);
-                        blackPieces.Add(rowBlack * 10 + 9 - 2, i);
+                        whitePieces.Add(GetCombinedPosition(rowWhite, 2), i);
+                        whitePieces.Add(GetCombinedPosition(rowWhite, 9 - 2), i);
+                        blackPieces.Add(GetCombinedPosition(rowBlack, 2), i);
+                        blackPieces.Add(GetCombinedPosition(rowBlack, 9 - 2), i);
                         break;
                     case PieceType.Bishop:
-                        whitePieces.Add(rowWhite * 10 + 3, i);
-                        whitePieces.Add(rowWhite * 10 + 9 - 3, i);
-                        blackPieces.Add(rowBlack * 10 + 3, i);
-                        blackPieces.Add(rowBlack * 10 + 9 - 3, i);
+                        whitePieces.Add(GetCombinedPosition(rowWhite, 3), i);
+                        whitePieces.Add(GetCombinedPosition(rowWhite, 9 - 3), i);
+                        blackPieces.Add(GetCombinedPosition(rowBlack, 3), i);
+                        blackPieces.Add(GetCombinedPosition(rowBlack, 9 - 3), i);
                         break;
                     case PieceType.Queen:
-                        whitePieces.Add(rowWhite * 10 + 4, i);
-                        blackPieces.Add(rowBlack * 10 + 4, i);
+                        whitePieces.Add(GetCombinedPosition(rowWhite, 4), i);
+                        blackPieces.Add(GetCombinedPosition(rowBlack, 4), i);
                         break;
                     default:
-                        whitePieces.Add(rowWhite * 10 + 5, i);
-                        blackPieces.Add(rowBlack * 10 + 5, i);
+                        whitePieces.Add(GetCombinedPosition(rowWhite, 5), i);
+                        blackPieces.Add(GetCombinedPosition(rowBlack, 5), i);
                         break;
                 }
             }
@@ -138,6 +143,8 @@ namespace ChessPawn
         {
             return color == PieceColor.White ? whitePieces : blackPieces;
         }
+
+        private int GetCombinedPosition(int row, int col) { return row * 10 + col; }
     }
 
     public enum PieceType
